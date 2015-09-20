@@ -23,7 +23,7 @@ activity_noNas <- activity[complete.cases(activity),]
 activity_summary <- activity_noNas %>% group_by(date) %>% 
                   summarise(steps = sum(steps))
 
-activity_summary %>% summarise(Total_Steps = sum(steps),
+summary <- activity_summary %>% summarise(Total_Steps = sum(steps),
                                Mean_Steps = mean(steps),
                                Median_Steps = median(steps)
                                )
@@ -34,6 +34,8 @@ hist(activity_summary$steps,
      border="blue", 
      col="green"
      )
+Total_Steps <- summary$Total_Steps
+
 ```
 
 
@@ -57,3 +59,63 @@ Interval_Max <- activity_interval %>% filter(steps >= max(steps)) %>%
 The interval that contains maximum number of steps is `r Interval_Max`
 
 
+Imputing missing values:
+
+```{r, echo=TRUE}
+Steps_NA_CNT <- sum(is.na(activity$steps))
+```
+
+The total number of rows with NAs are `r Steps_NA_CNT`
+
+```{r, echo=TRUE}
+activity_Nas <- activity[is.na(activity$steps), 2:3]
+
+activity_Nas_Imputed <- activity_noNas %>% group_by(interval) %>%
+                   summarise(steps = median(steps)) %>%
+                   inner_join(activity_Nas, by = c("interval" = "interval")) %>%
+                  select(steps, date, interval)
+  
+activity_imputed <- bind_rows(activity_Nas_Imputed, activity_noNas)
+
+activity_summary_Imputed <- activity_imputed %>% group_by(date) %>% 
+                  summarise(steps = sum(steps))
+
+summary_imputed <- activity_summary_Imputed %>% summarise(Total_Steps = sum(steps),
+                               Mean_Steps = mean(steps),
+                               Median_Steps = median(steps)
+                               )
+
+hist(activity_summary_Imputed$steps, 
+     main="Histogram for Activity", 
+     xlab="Steps", 
+     border="blue", 
+     col="green"
+     )
+
+Total_Steps_Imputed <- summary_imputed$Total_Steps 
+
+```
+
+
+The total steps after imputing for NAs were `r Total_Steps_Imputed` where as total steps before imputing were `r Total_Steps`
+
+
+Are there differences in activity patterns between weekdays and weekends?
+
+```{r, echo=TRUE}
+
+activity_imputed$date <- as.Date(activity_imputed$date)
+#create a vector of weekdays
+weekdays1 <- c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
+#convert to `factor` and specify the `levels/labels`
+activity_imputed$wDay <- factor((weekdays(activity_imputed$date) %in% weekdays1), 
+         levels=c(FALSE, TRUE), labels=c('weekend', 'weekday') )
+
+
+activity_interval_wday <- activity_imputed %>% group_by(wDay, interval) %>% 
+                  summarise(steps = mean(steps))
+
+library(lattice)
+xyplot(steps ~ interval | wDay, activity_interval_wday, layout = c(2,1), type = 'l')
+
+```
