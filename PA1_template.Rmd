@@ -1,25 +1,59 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducible Research"
+author: "Mudit Maheshwari"
+date: "September 20, 2015"
+output: html_document
 ---
 
+```{r, echo = FALSE, results = "hide"}
+library(dplyr)
+library(tidyr)
+```
 
-## Loading and preprocessing the data
+Loading and preprocessing the data:
+
+```{r}
+activity <- read.csv("C:/R/Coursera/05_ReproducibleResearch/activity.csv")
+```
+
+What is mean total number of steps taken per day?:
+
+```{r, echo=TRUE}
+activity_noNas <- activity[complete.cases(activity),] 
+activity_summary <- activity_noNas %>% group_by(date) %>% 
+                  summarise(steps = sum(steps))
+
+activity_summary %>% summarise(Total_Steps = sum(steps),
+                               Mean_Steps = mean(steps),
+                               Median_Steps = median(steps)
+                               )
+
+hist(activity_summary$steps, 
+     main="Histogram for Activity", 
+     xlab="Steps", 
+     border="blue", 
+     col="green"
+     )
+```
 
 
+What is the average daily activity pattern?
 
-## What is mean total number of steps taken per day?
+```{r, echo=TRUE}
+
+activity_interval <- activity_noNas %>% group_by(interval) %>% 
+                  summarise(steps = mean(steps))
+
+plot(activity_interval$interval, activity_interval$steps, type = 'l', xlab = "Interval",
+     ylab = "Steps", axes = FALSE)
+     axis(side = 1, c(seq(from=0,to=2500,by=100)))
+     axis(side = 2, c(seq(from=0,to=250,by=25)))
+     
+Interval_Max <- activity_interval %>% filter(steps >= max(steps)) %>%
+                      select(interval)
+          
+```
+
+The interval that contains maximum number of steps is `r Interval_Max`
 
 
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
